@@ -1,0 +1,37 @@
+import random
+
+print("Guess the Number Game")
+print("---------------------")
+
+# Set the range
+lower = 1
+upper = 100
+
+number = random.randint(lower, upper)
+attempts = 5
+
+print(f"I have chosen a number between {lower} and {upper}.")
+print(f"You have {attempts} attempts to guess it.\n")
+
+for i in range(attempts):
+    try:
+        guess = int(input(f"Attempt {i + 1}: Enter your guess: "))
+
+        if guess < number:
+            print("Too low! Try a bigger number.\n")
+
+        elif guess > number:
+            print("Too high! Try a smaller number.\n")
+
+        else:
+            print(f"Congratulations! You guessed the number {number} correctly!")
+            print(f"You got it in {i + 1} attempt(s).")
+            break
+
+    except ValueError:
+        print("Please enter a valid number.\n")
+
+else:
+    print("Sorry! You have used all your attempts.")
+    print(f"The correct number was {number}.")
+    print("Better luck next time!")
