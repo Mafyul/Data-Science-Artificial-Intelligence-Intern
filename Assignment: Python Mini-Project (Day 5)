@@ -1,0 +1,276 @@
+import csv
+import os
+
+
+FILE_NAME = "library_books.csv"
+
+
+class Book:
+    def __init__(self, book_id, title, author, category):
+        self.book_id = book_id
+        self.title = title
+        self.author = author
+        self.category = category
+        self.available = True
+
+    def display(self):
+        status = "Available" if self.available else "Issued"
+        print(
+            f"{self.book_id:<8} {self.title:<25} "
+            f"{self.author:<20} {self.category:<15} {status}"
+        )
+
+
+class Library:
+    def __init__(self):
+        self.books = []
+        self.categories = set()
+        self.load_books()
+
+    def load_books(self):
+        if not os.path.exists(FILE_NAME):
+            return
+
+        try:
+            with open(FILE_NAME, "r", newline="") as file:
+                reader = csv.DictReader(file)
+
+                for row in reader:
+                    book = Book(
+                        row["ID"],
+                        row["Title"],
+                        row["Author"],
+                        row["Category"]
+                    )
+
+                    book.available = row["Available"] == "Yes"
+                    self.books.append(book)
+                    self.categories.add(row["Category"])
+
+        except Exception as e:
+            print("Error loading books:", e)
+
+    def save_books(self):
+        with open(FILE_NAME, "w", newline="") as file:
+            fieldnames = ["ID", "Title", "Author", "Category", "Available"]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+
+            writer.writeheader()
+
+            for book in self.books:
+                writer.writerow({
+                    "ID": book.book_id,
+                    "Title": book.title,
+                    "Author": book.author,
+                    "Category": book.category,
+                    "Available": "Yes" if book.available else "No"
+                })
+
+    def add_book(self):
+        print("\n--- Add New Book ---")
+
+        book_id = input("Enter Book ID: ")
+
+        for book in self.books:
+            if book.book_id == book_id:
+                print("Book ID already exists.")
+                return
+
+        title = input("Enter Book Title: ")
+        author = input("Enter Author Name: ")
+        category = input("Enter Category: ")
+
+        if not title or not author or not category:
+            print("All fields are required.")
+            return
+
+        book = Book(book_id, title, author, category)
+
+        self.books.append(book)
+        self.categories.add(category)
+        self.save_books()
+
+        print("Book added successfully!")
+
+    def view_books(self):
+        if not self.books:
+            print("\nNo books available in the library.")
+            return
+
+        print("\n---------------- Library Books ----------------")
+        print(
+            f"{'ID':<8} {'Title':<25} "
+            f"{'Author':<20} {'Category':<15} Status"
+        )
+        print("-" * 85)
+
+        for book in self.books:
+            book.display()
+
+    def search_book(self):
+        search = input("\nEnter book title, author or ID: ").lower()
+
+        found = False
+
+        for book in self.books:
+            if (
+                search in book.title.lower()
+                or search in book.author.lower()
+                or search == book.book_id.lower()
+            ):
+                book.display()
+                found = True
+
+        if not found:
+            print("No matching book found.")
+
+    def issue_book(self):
+        book_id = input("\nEnter Book ID to issue: ")
+
+        for book in self.books:
+            if book.book_id == book_id:
+
+                if book.available:
+                    book.available = False
+                    self.save_books()
+                    print(f"'{book.title}' has been issued.")
+                else:
+                    print("This book is already issued.")
+
+                return
+
+        print("Book not found.")
+
+    def return_book(self):
+        book_id = input("\nEnter Book ID to return: ")
+
+        for book in self.books:
+            if book.book_id == book_id:
+
+                if not book.available:
+                    book.available = True
+                    self.save_books()
+                    print(f"'{book.title}' has been returned.")
+                else:
+                    print("This book was not issued.")
+
+                return
+
+        print("Book not found.")
+
+    def delete_book(self):
+        book_id = input("\nEnter Book ID to delete: ")
+
+        for book in self.books:
+            if book.book_id == book_id:
+
+                if not book.available:
+                    print("Cannot delete an issued book.")
+                    return
+
+                self.books.remove(book)
+                self.save_books()
+
+                print("Book deleted successfully.")
+                return
+
+        print("Book not found.")
+
+    def show_categories(self):
+        if not self.categories:
+            print("No categories available.")
+            return
+
+        print("\n--- Book Categories ---")
+
+        for category in sorted(self.categories):
+            print("-", category)
+
+    def library_statistics(self):
+        total = len(self.books)
+        available = 0
+        issued = 0
+
+        for book in self.books:
+            if book.available:
+                available += 1
+            else:
+                issued += 1
+
+        stats = {
+            "Total Books": total,
+            "Available Books": available,
+            "Issued Books": issued,
+            "Categories": len(self.categories)
+        }
+
+        print("\n--- Library Statistics ---")
+
+        for key, value in stats.items():
+            print(f"{key}: {value}")
+
+
+def show_menu():
+    print("\n========== LIBRARY MANAGEMENT SYSTEM ==========")
+    print("1. Add Book")
+    print("2. View All Books")
+    print("3. Search Book")
+    print("4. Issue Book")
+    print("5. Return Book")
+    print("6. Delete Book")
+    print("7. View Categories")
+    print("8. Library Statistics")
+    print("9. Exit")
+    print("===============================================")
+
+
+def main():
+    library = Library()
+
+    while True:
+        show_menu()
+
+        try:
+            choice = int(input("Enter your choice: "))
+
+            if choice == 1:
+                library.add_book()
+
+            elif choice == 2:
+                library.view_books()
+
+            elif choice == 3:
+                library.search_book()
+
+            elif choice == 4:
+                library.issue_book()
+
+            elif choice == 5:
+                library.return_book()
+
+            elif choice == 6:
+                library.delete_book()
+
+            elif choice == 7:
+                library.show_categories()
+
+            elif choice == 8:
+                library.library_statistics()
+
+            elif choice == 9:
+                print("\nThank you for using the Library Management System!")
+                break
+
+            else:
+                print("Please enter a number between 1 and 9.")
+
+        except ValueError:
+            print("Invalid input! Please enter a valid number.")
+
+        except KeyboardInterrupt:
+            print("\nProgram stopped.")
+            break
+
+
+if __name__ == "__main__":
+    main()
